@@ -108,8 +108,8 @@ Thumbnails : thumbnails settings. All thumbnails will end up in the same
 directory, no matter the resource type.
 */
 $config['Thumbnails'] = Array(
-		'url' => $baseUrl . '_thumbs',
-		'directory' => $baseDir . '_thumbs',
+		'url' => '/ckfinder/userfiles/' . '_thumbs',
+		'directory' =>  resolveUrl('/ckfinder/userfiles/') . '_thumbs',
 		'enabled' => true,
 		'directAccess' => false,
 		'maxWidth' => 100,
