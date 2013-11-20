@@ -42,6 +42,11 @@ class CKFinder_Connector_CommandHandler_Thumbnail extends CKFinder_Connector_Com
      */
     public function sendResponse()
     {
+
+    	global $config;
+
+    	$s3 = s3_con();
+
         // Get rid of BOM markers
         if (ob_get_level()) {
             while (@ob_end_clean() && ob_get_level());
@@ -75,7 +80,7 @@ class CKFinder_Connector_CommandHandler_Thumbnail extends CKFinder_Connector_Com
 
         $sourceFilePath = CKFinder_Connector_Utils_FileSystem::combinePaths($this->_currentFolder->getServerPath(), $fileName);
 
-        if ($_resourceTypeInfo->checkIsHiddenFile($fileName) || !file_exists($sourceFilePath)) {
+        if ($_resourceTypeInfo->checkIsHiddenFile($fileName) || !$s3->getObjectInfo($config['AmazonS3']['Bucket'], substr($sourceFilePath, 1), false)) {
             $this->_errorHandler->throwError(CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
         }
 
@@ -83,7 +88,10 @@ class CKFinder_Connector_CommandHandler_Thumbnail extends CKFinder_Connector_Com
 
         // If the thumbnail file doesn't exists, create it now.
         if (!file_exists($thumbFilePath)) {
-            if(!$this->createThumb($sourceFilePath, $thumbFilePath, $_thumbnails->getMaxWidth(), $_thumbnails->getMaxHeight(), $_thumbnails->getQuality(), true, $_thumbnails->getBmpSupported())) {
+        	// Get TMP file...
+        	$tmpFile = tempnam('/tmp', 'thmb');
+        	$s3->getObject($config['AmazonS3']['Bucket'], substr($sourceFilePath, 1), $tmpFile);
+            if(!$this->createThumb($tmpFile, $thumbFilePath, $_thumbnails->getMaxWidth(), $_thumbnails->getMaxHeight(), $_thumbnails->getQuality(), true, $_thumbnails->getBmpSupported())) {
                 $this->_errorHandler->throwError(CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED);
             }
         }
